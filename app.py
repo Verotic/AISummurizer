@@ -14,8 +14,9 @@ def summarize_text_with_llama(text):
     }
 
     data = {
+        
         "model": "llama3.2",
-        "prompt": f"Resuma o seguinte livro detalhadamente:\n\n{text}",
+        "prompt": f"Resuma o seguinte livro detalhadamente, destacando os pontos principais, o enredo, os personagens principais, e a mensagem ou conclusão. O resumo deve ser claro e conciso:\n\n{text}",
         "max_tokens": 128256  # Ajuste conforme necessário
     }
 
