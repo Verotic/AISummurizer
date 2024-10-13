@@ -6,13 +6,23 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import mac_morpho
 from nltk.tag import UnigramTagger, BigramTagger
 import spacy
+import unicodedata
 
 # Download necessary NLTK resources
 nltk.download('punkt')
 nltk.download('mac_morpho')
 
 # Load the Portuguese model for spacy
-nlp = spacy.load('pt_core_news_sm')
+nlp = spacy.load('pt_core_news_lg')
+
+# Function to remove accented characters from text
+def remove_accented_chars(text):
+    """
+    Recebe um texto e remove todos os caracteres acentuados, 
+    convertendo-os para o caracter equivalente sem acento.
+    """
+    text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8', 'ignore')
+    return text
 
 # Function to extract text from DOCX file
 def extract_text_from_docx(docx_path):
@@ -104,6 +114,12 @@ def main():
 
         # Extrair o texto do DOCX
         text = extract_text_from_docx(docx_path)
+        
+        # Normalize the text by removing accents and extra spaces
+        text = remove_accented_chars(text)
+        text = ' '.join(text.split()).lower()
+        print(f"Normalized text: {text[:100]}...")  # Debug statement to check normalization
+        
         sentences = tokenize_sentences(text)
         verbs = extract_verbs(sentences)
         infinitive_verbs = convert_to_infinitive(verbs)
