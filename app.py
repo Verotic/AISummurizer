@@ -3,7 +3,6 @@ import docx
 import requests
 import json
 
-
 # Função para resumir texto usando o modelo Llama via API Ollama
 def summarize_text_with_llama(text):
     url = "http://localhost:11434/api/generate"  # Verifique o endereço correto da API
