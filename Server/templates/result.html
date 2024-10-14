@@ -22,9 +22,48 @@
           >Download</a
         >
       </div>
+      <div id="chatContainer" class="mt-5">
+        <h2 class="text-center">Chat about the Modified DOCX</h2>
+        <div class="form-group">
+          <input
+            type="text"
+            id="questionInput"
+            class="form-control"
+            placeholder="Ask a question..."
+          />
+        </div>
+        <button id="askButton" class="btn btn-primary btn-block">Ask</button>
+        <div id="chatOutput" class="mt-4"></div>
+      </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+      document
+        .getElementById("askButton")
+        .addEventListener("click", function () {
+          const question = document.getElementById("questionInput").value;
+          const filename = "{{ original_file }}"; // Use the original filename from the template
+
+          fetch("/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ filename: filename, question: question }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              const chatOutput = document.getElementById("chatOutput");
+              if (data.answer) {
+                chatOutput.innerHTML += `<p><strong>Question:</strong> ${question}</p>`;
+                chatOutput.innerHTML += `<p><strong>Answer:</strong> ${data.answer}</p>`;
+              } else {
+                chatOutput.innerHTML += `<p><strong>Error:</strong> ${data.error}</p>`;
+              }
+            });
+        });
+    </script>
   </body>
 </html>

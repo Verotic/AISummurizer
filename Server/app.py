@@ -1,8 +1,10 @@
-from flask import Flask, request, render_template, redirect, url_for, send_from_directory
+from flask import Flask, request, render_template, redirect, url_for, send_from_directory, jsonify
 import os
 from werkzeug.utils import secure_filename
 import docx
 from infinitive import extract_text_from_docx, tokenize_sentences, extract_verbs, convert_to_infinitive, replace_verbs_with_infinitive, remove_accented_chars
+import requests
+import json
 
 # Define the path to the uploads folder relative to the Server folder
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'uploads')
@@ -15,8 +17,60 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
+# Store the modified text for chat processing
+modified_text_storage = {}
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Function to summarize text using the Llama model via API Ollama
+def summarize_text_with_llama(text, question):
+    url = "http://localhost:11434/api/generate"  # Verifique o endereço correto da API
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "command-r",
+        "prompt": f"Texto: {text}\n\nPergunta: {question}\n\nResposta:",
+        "max_tokens": 128256  # Ajuste conforme necessário
+    }
+
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+
+    if response.status_code == 200:
+        try:
+            # Pegue o conteúdo bruto da resposta como texto
+            raw_text = response.text
+
+            # Divide o texto bruto em possíveis fragmentos de JSON
+            json_fragments = raw_text.splitlines()
+
+            # Variável para armazenar a resposta completa
+            resposta_completa = ""
+
+            for fragment in json_fragments:
+                # Tenta carregar cada fragmento como JSON
+                try:
+                    json_data = json.loads(fragment)
+                    if 'response' in json_data:
+                        resposta_completa += json_data['response']  # Concatena o fragmento
+                    if json_data.get('done', False):  # Verifica se é o último fragmento
+                        break
+                except json.JSONDecodeError:
+                    continue  # Se o fragmento não for JSON, passa para o próximo
+
+            if not resposta_completa: 
+                resposta_completa = "Sem resposta disponível."
+
+            return resposta_completa.strip()
+        
+        except Exception as e:
+            raise Exception(f"Erro ao processar a resposta da API: {e}")
+
+    else:
+        raise Exception(f"Erro ao se conectar à API Llama: {response.status_code} {response.text}")
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
@@ -66,7 +120,28 @@ def process_file(filename):
     doc.save(modified_docx_path)
     print(f"Modified file saved to {modified_docx_path}")
 
-    return render_template('result.html', modified_file=filename.replace('.docx', '_modified.docx'))
+    # Store the modified text for chat processing
+    modified_text_storage[filename] = modified_text
+
+    return render_template('result.html', modified_file=filename.replace('.docx', '_modified.docx'), original_file=filename)
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.json
+    filename = data.get('filename')
+    question = data.get('question')
+
+    if filename not in modified_text_storage:
+        return jsonify({'error': 'File not found'}), 404
+
+    modified_text = modified_text_storage[filename]
+
+    # Summarize the text using the Llama model
+    try:
+        answer = summarize_text_with_llama(modified_text, question)
+        return jsonify({'answer': answer})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/download/<filename>')
 def download_file(filename):

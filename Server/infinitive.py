@@ -17,10 +17,6 @@ nlp = spacy.load('pt_core_news_lg')
 
 # Function to remove accented characters from text
 def remove_accented_chars(text):
-    """
-    Recebe um texto e remove todos os caracteres acentuados, 
-    convertendo-os para o caracter equivalente sem acento.
-    """
     text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8', 'ignore')
     return text
 
