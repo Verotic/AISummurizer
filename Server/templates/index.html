@@ -11,60 +11,141 @@
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <style>
+      body {
+        display: flex;
+        background-color: #121212;
+        color: #ffffff;
+      }
+
+      #content {
+        margin-left: 270px;
+        padding: 20px;
+        width: 100%;
+      }
+      .card {
+        background-color: #1f1f1f;
+        border: none;
+      }
+      .card-body {
+        color: #ffffff;
+      }
+      .btn-primary {
+        background-color: #6200ea;
+        border-color: #6200ea;
+      }
+      .btn-primary:hover {
+        background-color: #3700b3;
+        border-color: #3700b3;
+      }
+      .form-control,
+      .form-control-file {
+        background-color: #2c2c2c;
+        color: #ffffff;
+        border: 1px solid #444444;
+      }
+      .form-control::placeholder {
+        color: #bbbbbb;
+      }
+      .list-group-item {
+        background-color: #2c2c2c;
+        color: #ffffff;
+        border: 1px solid #444444;
+      }
+      .list-group-item:hover {
+        background-color: #444444;
+      }
+      .spinner {
+        display: none;
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
   </head>
   <body>
-    <div class="container mt-5">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h1 class="text-center mb-4">Upload DOCX File</h1>
-          <form
-            id="uploadForm"
-            method="post"
-            enctype="multipart/form-data"
-            class="mt-4"
-          >
-            <div class="form-group">
-              <label for="fileInput" class="form-label">Choose DOCX file</label>
-              <input
-                type="file"
-                name="file"
-                id="fileInput"
-                class="form-control-file"
-                required
-              />
-            </div>
-            <button type="submit" class="btn btn-primary btn-block">
-              Upload
-            </button>
-          </form>
-          <div
-            id="loadingSpinner"
-            class="text-center mt-4"
-            style="display: none"
-          >
-            <div class="spinner-border text-primary" role="status">
-              <span class="sr-only">Loading...</span>
-            </div>
-            <p>Processing your file, please wait...</p>
-          </div>
-        </div>
-      </div>
-      <div id="chatContainer" class="mt-5" style="display: none">
+    <div id="content">
+      <div class="container mt-5">
         <div class="card shadow-sm">
           <div class="card-body">
-            <h2 class="text-center mb-4">Chat about the Modified DOCX</h2>
-            <div class="form-group">
-              <input
-                type="text"
-                id="questionInput"
-                class="form-control"
-                placeholder="Ask a question..."
-              />
+            <h1 class="text-center mb-4">Upload DOCX File</h1>
+            <form
+              id="uploadForm"
+              method="post"
+              enctype="multipart/form-data"
+              class="mt-4"
+            >
+              <div class="form-group">
+                <label for="fileInput" class="form-label"
+                  >Choose DOCX file</label
+                >
+                <input
+                  type="file"
+                  name="file"
+                  id="fileInput"
+                  class="form-control-file"
+                  required
+                />
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">
+                Upload
+              </button>
+            </form>
+            <div
+              id="loadingSpinner"
+              class="text-center mt-4"
+              style="display: none"
+            >
+              <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+              </div>
+              <p>Processing your file, please wait...</p>
             </div>
-            <button id="askButton" class="btn btn-primary btn-block">
-              Ask
-            </button>
-            <div id="chatOutput" class="mt-4"></div>
+          </div>
+        </div>
+        <div id="chatContainer" class="mt-5" style="display: none">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h2 class="text-center mb-4">Chat about the Modified DOCX</h2>
+              <div class="form-group">
+                <input
+                  type="text"
+                  id="questionInput"
+                  class="form-control"
+                  placeholder="Ask a question..."
+                />
+              </div>
+              <button id="askButton" class="btn btn-primary btn-block">
+                Ask
+              </button>
+              <div
+                id="loadingSpinnerChat"
+                class="text-center mt-4"
+                style="display: none"
+              >
+                <div class="spinner-border text-primary" role="status">
+                  <span class="sr-only">Loading...</span>
+                </div>
+                <p>Talking to the AI, please wait...</p>
+              </div>
+              <div id="chatOutput" class="mt-4"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -75,15 +156,44 @@
     <script>
       document
         .getElementById("uploadForm")
-        .addEventListener("submit", function () {
-          document.getElementById("loadingSpinner").style.display = "block";
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          var spinner = document.getElementById("loadingSpinner");
+          spinner.style.display = "block";
+
+          var formData = new FormData(this);
+
+          fetch("/", {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => {
+              if (response.redirected) {
+                window.location.href = response.url;
+              } else {
+                return response.json();
+              }
+            })
+            .then((data) => {
+              spinner.style.display = "none";
+              // Handle the response data if needed
+              console.log(data);
+            })
+            .catch((error) => {
+              spinner.style.display = "none";
+              console.error("Error:", error);
+            });
         });
 
       document
         .getElementById("askButton")
         .addEventListener("click", function () {
           const question = document.getElementById("questionInput").value;
-          const filename = "your_uploaded_filename_here"; // Replace with actual filename
+          const filename =
+            document.getElementById("chatContainer").dataset.filename;
+
+          // Show the loading spinner
+          document.getElementById("loadingSpinnerChat").style.display = "block";
 
           fetch("/chat", {
             method: "POST",
@@ -101,6 +211,16 @@
               } else {
                 chatOutput.innerHTML += `<p><strong>Error:</strong> ${data.error}</p>`;
               }
+              // Hide the loading spinner
+              document.getElementById("loadingSpinnerChat").style.display =
+                "none";
+            })
+            .catch((error) => {
+              const chatOutput = document.getElementById("chatOutput");
+              chatOutput.innerHTML += `<p><strong>Error:</strong> ${error.message}</p>`;
+              // Hide the loading spinner
+              document.getElementById("loadingSpinnerChat").style.display =
+                "none";
             });
         });
     </script>

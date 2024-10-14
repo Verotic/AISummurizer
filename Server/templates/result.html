@@ -11,6 +11,57 @@
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <style>
+      body {
+        background-color: #121212;
+        color: #ffffff;
+      }
+      .card {
+        background-color: #1f1f1f;
+        border: none;
+      }
+      .card-body {
+        color: #ffffff;
+      }
+      .btn-success {
+        background-color: #388e3c;
+        border-color: #388e3c;
+      }
+      .btn-success:hover {
+        background-color: #2e7d32;
+        border-color: #2e7d32;
+      }
+      .form-control {
+        background-color: #2c2c2c;
+        color: #ffffff;
+        border: 1px solid #444444;
+      }
+      .form-control::placeholder {
+        color: #bbbbbb;
+      }
+      .spinner {
+        display: none;
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
   </head>
   <body>
     <div class="container mt-5">
@@ -33,6 +84,7 @@
           />
         </div>
         <button id="askButton" class="btn btn-primary btn-block">Ask</button>
+        <div id="loadingSpinnerChat" class="spinner"></div>
         <div id="chatOutput" class="mt-4"></div>
       </div>
     </div>
@@ -45,6 +97,10 @@
         .addEventListener("click", function () {
           const question = document.getElementById("questionInput").value;
           const filename = "{{ original_file }}"; // Use the original filename from the template
+
+          // Show the loading spinner
+          document.getElementById("loadingSpinnerChat").style.display = "block";
+          console.log("Sending question to the model:", question);
 
           fetch("/chat", {
             method: "POST",
@@ -59,9 +115,22 @@
               if (data.answer) {
                 chatOutput.innerHTML += `<p><strong>Question:</strong> ${question}</p>`;
                 chatOutput.innerHTML += `<p><strong>Answer:</strong> ${data.answer}</p>`;
+                console.log("Received answer from the model:", data.answer);
               } else {
                 chatOutput.innerHTML += `<p><strong>Error:</strong> ${data.error}</p>`;
+                console.error("Error from the model:", data.error);
               }
+              // Hide the loading spinner
+              document.getElementById("loadingSpinnerChat").style.display =
+                "none";
+            })
+            .catch((error) => {
+              const chatOutput = document.getElementById("chatOutput");
+              chatOutput.innerHTML += `<p><strong>Error:</strong> ${error.message}</p>`;
+              console.error("Error during fetch:", error);
+              // Hide the loading spinner
+              document.getElementById("loadingSpinnerChat").style.display =
+                "none";
             });
         });
     </script>

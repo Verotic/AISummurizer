@@ -23,7 +23,7 @@ modified_text_storage = {}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Function to summarize text using the Llama model via API Ollama
+# Function to summarize text using the Llama model via API Ollama with late chunking
 def summarize_text_with_llama(text, question):
     url = "http://localhost:11434/api/generate"  # Verifique o endereço correto da API
 
@@ -32,8 +32,8 @@ def summarize_text_with_llama(text, question):
     }
 
     data = {
-        "model": "command-r",
-        "prompt": f"Texto: {text}\n\nPergunta: {question}\n\nResposta:",
+        "model": "llama3.2",
+        "prompt": f"Resposta:\n\n{text}Pergunta:\n\n{question}",
         "max_tokens": 128256  # Ajuste conforme necessário
     }
 
@@ -48,29 +48,30 @@ def summarize_text_with_llama(text, question):
             json_fragments = raw_text.splitlines()
 
             # Variável para armazenar a resposta completa
-            resposta_completa = ""
+            resumo_completo = ""
 
             for fragment in json_fragments:
                 # Tenta carregar cada fragmento como JSON
                 try:
                     json_data = json.loads(fragment)
                     if 'response' in json_data:
-                        resposta_completa += json_data['response']  # Concatena o fragmento
+                        resumo_completo += json_data['response']  # Concatena o fragmento
                     if json_data.get('done', False):  # Verifica se é o último fragmento
                         break
                 except json.JSONDecodeError:
                     continue  # Se o fragmento não for JSON, passa para o próximo
 
-            if not resposta_completa: 
-                resposta_completa = "Sem resposta disponível."
+            if not resumo_completo: 
+                resumo_completo = "Sem resumo disponível."
 
-            return resposta_completa.strip()
+            return resumo_completo.strip()
         
         except Exception as e:
             raise Exception(f"Erro ao processar a resposta da API: {e}")
 
     else:
         raise Exception(f"Erro ao se conectar à API Llama: {response.status_code} {response.text}")
+
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
