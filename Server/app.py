@@ -3,7 +3,7 @@ import os
 from werkzeug.utils import secure_filename
 import docx
 from infinitive import extract_text_from_docx, tokenize_sentences, extract_verbs, convert_to_infinitive, replace_verbs_with_infinitive, remove_accented_chars
-#teste
+#adriano é G**
 # Define the path to the uploads folder relative to the Server folder
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'uploads')
 ALLOWED_EXTENSIONS = {'docx'}
