@@ -13,7 +13,7 @@ nltk.download('punkt')
 nltk.download('mac_morpho')
 
 # Load the Portuguese model for spacy
-nlp = spacy.load('pt_core_news_lg')
+#nlp = spacy.load('pt_core_news_lg')
 
 # Function to remove accented characters from text
 def remove_accented_chars(text):
