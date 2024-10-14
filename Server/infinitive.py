@@ -10,10 +10,11 @@ import unicodedata
 
 # Download necessary NLTK resources
 nltk.download('punkt')
+nltk.download('punkt_tab')
 nltk.download('mac_morpho')
 
 # Load the Portuguese model for spacy
-#nlp = spacy.load('pt_core_news_lg')
+nlp = spacy.load('pt_core_news_lg')
 
 # Function to remove accented characters from text
 def remove_accented_chars(text):
@@ -104,7 +105,8 @@ def replace_verbs_with_infinitive(text):
 
 # Main function to process the document, replace verbs, and export the modified text
 def main():
-    books_dir = os.path.join(os.path.dirname(__file__), 'Books')
+    books_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'Books')
+
     books = list_books(books_dir)
     selected_book = select_book(books)
 

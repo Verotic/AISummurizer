@@ -2,3 +2,5 @@ torch
 transformers
 requests
 PyPDF2
+spacy
+docx
